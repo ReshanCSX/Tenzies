@@ -1,10 +1,24 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Die from "./components/Die"
 import { nanoid } from "nanoid"
+import Confetti from 'react-confetti'
 
 export default function App(){
   
   const [dice, setDice] = useState(allNewDice())
+  const [tenzies, setTenzies] = useState(false)
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    const allHeld = dice.every(die => die.isHeld)
+    const fristNumber = dice[0].value
+    const allSameValue = dice.every(die => die.value === fristNumber)
+
+    if (allHeld && allSameValue){
+      setTenzies(true)
+    }
+
+  },[dice])
 
   // Generating die numbers
   function generateDie(){
@@ -26,9 +40,18 @@ export default function App(){
   }
 
   function rollDice(){
-    setDice(oldDice => oldDice.map(die => {
-      return die.isHeld ? die : generateDie()
-    }))
+    if(!tenzies){
+      setDice(oldDice => oldDice.map(die => {
+        return die.isHeld ? die : generateDie()
+      }))
+
+      setCount(prevCount => prevCount + 1)
+
+    } else{
+      setTenzies(false)
+      setDice(allNewDice())
+      setCount(0)
+    }
   }
 
   // Generate dice elements
@@ -48,15 +71,23 @@ export default function App(){
 
   return(
     <main>
-
+      {tenzies && <Confetti />}
       <h1 className="title">Tenzies</h1>
-      <p className="instructions">Roll until all dice are the same. Click each die to freeze it at its current value between rolls.</p>
-
-      <div className="dice-container">
-        {diceElements}
-      </div>
-
-      <button className="roll-button" onClick={rollDice}>Roll</button>
+      {
+        tenzies ?
+          <div>
+            <h2 className="winning-title">Congratulations</h2>
+            <p className="rolls-count">you did it in <b>{count} rolls.</b></p>
+          </div>
+          :
+          <>
+            <p className="instructions">Roll until all dice are the same. Click each die to freeze it at its current value between rolls.</p>
+            <div className="dice-container">
+              {diceElements}
+            </div>
+          </>
+      }
+      <button className="roll-button" onClick={rollDice}>{tenzies ? "New Game" : "Roll"}</button>
     </main>
   )
 }
